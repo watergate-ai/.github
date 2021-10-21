@@ -5,17 +5,12 @@ inputs:
    token:
      description: "Token needed to access files "
      required: true
-   path:
-     description: "PR version number"
+   tag-version:
+     description: "Tag version number"
      required: true
 runs:
    using: "composite"
    steps:
-    - name: 'Get Previous tag'
-      id: previoustag
-      uses: "WyriHaximus/github-action-get-previous-tag@v1"
-      with:
-        fallback: 0.0.0
     - name: get version
       id: version
       uses: notiz-dev/github-action-json-property@release
@@ -26,7 +21,7 @@ runs:
       shell: bash
       run: | 
         CurrV='${{steps.version.outputs.prop}}'
-        ExpecV='${{steps.previoustag.outputs.tag}}''
+        ExpecV='${{inputs.tag-version}}'
         printf -v versions '%s\n%s' "$CurrV" "$ExpecV"
         if [[ $versions = "$(sort -V <<< "$versions")" ]]; then
             exit 1
