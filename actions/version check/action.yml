@@ -6,9 +6,11 @@ inputs:
      description: "Token needed to access files "
      required: true
    version:
-     description: "Path to test files"
+     description: "PR version number"
      required: true
-
+   tag-version:
+     description: "Current release version number"
+     required: true
 runs:
    using: "composite"
    steps:
@@ -21,7 +23,7 @@ runs:
       shell: bash
       run: | 
         CurrV='${{inputs.version}}'
-        ExpecV='${{steps.previoustag.outputs.tag}}'
+        ExpecV='${{inputs.tag-version}}''
         printf -v versions '%s\n%s' "$CurrV" "$ExpecV"
         if [[ $versions = "$(sort -V <<< "$versions")" ]]; then
             exit 1
