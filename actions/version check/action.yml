@@ -16,6 +16,7 @@ runs:
         with:
           node-version: '14'
       - run: npm install
+        shell: bash
       - name: Check if version has been updated
         id: check
         uses: EndBug/version-check@v2.0.1
@@ -23,9 +24,12 @@ runs:
           file-name: function/version.json
           token: ${{ secrets.HL_GITHUB_TOKEN }}
           diff-search: true
+          shell: bash
       - name: Log when unchanged
         if: steps.check.outputs.changed == 'false' || steps.check.outputs.type == 'undefined'
         run: exit 1
+        shell: bash
       - name: Log when changed
         if: steps.check.outputs.changed == 'true'
         run: 'echo "Version change found in commit ${{ steps.check.outputs.commit }}! New version: ${{ steps.check.outputs.version }} (${{ steps.check.outputs.type }})"'
+        shell: bash
