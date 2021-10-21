@@ -1,0 +1,31 @@
+name: "Version check"
+description: "Compares the versions of the current code on the master branch and the version located in the PR."
+
+inputs:
+   token:
+     description: "Token needed to access files "
+     required: true
+   version:
+     description: "Path to test files"
+     required: true
+
+runs:
+   using: "composite"
+   steps:
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: npm install
+      - name: Check if version has been updated
+        id: check
+        uses: EndBug/version-check@v2.0.1
+        with:
+          file-name: function/version.json
+          token: ${{ secrets.HL_GITHUB_TOKEN }}
+          diff-search: true
+      - name: Log when unchanged
+        if: steps.check.outputs.changed == 'false' || steps.check.outputs.type == 'undefined'
+        run: exit 1
+      - name: Log when changed
+        if: steps.check.outputs.changed == 'true'
+        run: 'echo "Version change found in commit ${{ steps.check.outputs.commit }}! New version: ${{ steps.check.outputs.version }} (${{ steps.check.outputs.type }})"'
