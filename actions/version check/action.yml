@@ -15,7 +15,7 @@ runs:
       id: version
       uses: notiz-dev/github-action-json-property@release
       with: 
-          path: 'function/version.json'
+          path: '${{inputs.path-to-json}}'
           prop_path: 'version'
     - name: 'Get Previous tag'
       id: previoustag
