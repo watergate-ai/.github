@@ -5,6 +5,9 @@ inputs:
    token:
      description: "Token needed to access files "
      required: true
+   path-to-json:
+     description: "Path to json folder with version"
+     required: true
 runs:
    using: "composite"
    steps:
