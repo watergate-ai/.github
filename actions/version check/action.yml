@@ -18,6 +18,7 @@ runs:
       with:
         fallback: 0.0.0
     - name: Log when changed
+      shell: bash
       run: | 
         CurrV='${{inputs.version}}'
         ExpecV='${{steps.previoustag.outputs.tag}}'
