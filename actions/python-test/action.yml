@@ -1,5 +1,5 @@
 name: "Perform a code test"
-description: "Installing dependenncies an running a test"
+description: "Installing dependencies and running tests"
 
 inputs:
    token:
@@ -12,7 +12,7 @@ inputs:
 runs:
    using: "composite"
    steps:
-       - name: Install Python 3
+       - name: Install Python 3.7
          uses: actions/setup-python@v1
          with:
            python-version: 3.7
