@@ -30,7 +30,7 @@ inputs:
      description: "AWS production key"
      required: true
    secret-key-production:
-     description: "AWS production secret key""
+     description: "AWS production secret key"
      required: true
    source-directory:
      description: "Name of repository needed to create code packages"
