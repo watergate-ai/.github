@@ -15,10 +15,10 @@ inputs:
      description: "Repository type used in bash code"
      required: true
    staging-bucket:
-     description: "Staging bucket name"
+     description: "Staging s3 bucket name"
      required: true
    production-bucket:
-     description: "Production bucket name"
+     description: "Production s3 bucket name"
      required: true
    access-key-staging:
      description: "AWS staging key"
@@ -37,7 +37,7 @@ inputs:
      required: true
    included-files:
      description: "List of folders/files included in the release"
-     required: true
+     required: false
    nested-folder:
      description: "Folder name if files are nested"
      required: false
@@ -55,7 +55,7 @@ runs:
         with: 
            path: '${inputs.path-to-json}'
            prop_path: 'version'
-      - name: Install NPM dependencies
+      - name: Install NPM dependencies and create folder with files used in subsequent steps
         shell: bash
         run: | 
           if [[ ${inputs.repository-type} = "typescript)" ]]; then
@@ -76,18 +76,18 @@ runs:
           else
               exit 1
           fi
-      - name: Archive Release
+      - name: Archive files for S3 package
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
           directory: ./${inputs.source-directory}
           filename: '${inputs.repository-name}-${{steps.version.outputs.prop}}.zip'
-      - name: Creatinng txt file with version
+      - name: Creat txt file with version number for S3 package
         run: |
           cd ${inputs.source-directory}
           touch ${inputs.repository-name}.txt
           echo "${{steps.version.outputs.prop}}" >> ${inputs.repository-name}.txt
-      - name: Upload Release
+      - name: Upload code under Release tag
         uses: ncipollo/release-action@v1
         with:
           tag: ${{steps.version.outputs.prop}}
@@ -99,7 +99,7 @@ runs:
         with:
           args:  --delete --exclude '*' --include ${inputs.repository-name}-${{steps.version.outputs.prop}}.zip --include ${inputs.repository-name}-version.txt
         env:
-          AWS_S3_BUCKET: 'hero-labs-lambdas-staging'
+          AWS_S3_BUCKET: ${inputs.staging-bucket}
           AWS_ACCESS_KEY_ID: ${inputs.access-key-staging}
           AWS_SECRET_ACCESS_KEY: ${inputs.secret-key-staging}
           SOURCE_DIR: './${inputs.source-directory}'
@@ -108,7 +108,7 @@ runs:
         with:
           args:  --delete --exclude '*' --include ${inputs.repository-name}-${{steps.version.outputs.prop}}.zip
         env:
-          AWS_S3_BUCKET: 'hero-labs-lambdas-production'
+          AWS_S3_BUCKET: ${inputs.production-bucket}
           AWS_ACCESS_KEY_ID: ${inputs.access-key-production}
           AWS_SECRET_ACCESS_KEY: ${inputs.secret-key-production}
           SOURCE_DIR: './${inputs.source-directory}'
