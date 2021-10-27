@@ -1,0 +1,114 @@
+name: "Perform a code test"
+description: "Installing dependencies and running tests"
+
+inputs:
+   token:
+     description: "Token needed to access files "
+     required: true
+   path-to-json:
+     description: "Path to json folder with version"
+     required: true
+   repository-name:
+     description: "Name of repository needed to create code packages"
+     required: true
+   repository-type:
+     description: "Repository type used in bash code"
+     required: true
+   staging-bucket:
+     description: "Staging bucket name"
+     required: true
+   production-bucket:
+     description: "Production bucket name"
+     required: true
+   access-key-staging:
+     description: "AWS staging key"
+     required: true
+   secret-key-staging:
+     description: "AWS secret key staging"
+     required: true
+   access-key-production:
+     description: "AWS production key"
+     required: true
+   secret-key-production:
+     description: "AWS production secret key""
+     required: true
+   source-directory:
+     description: "Name of repository needed to create code packages"
+     required: true
+   included-files:
+     description: "List of folders/files included in the release"
+     required: true
+   nested-folder:
+     description: "Folder name if files are nested"
+     required: false
+
+runs:
+   using: "composite"
+   steps:
+    steps:
+      - uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
+      - name: Read verion number from json file
+        id: version
+        uses: notiz-dev/github-action-json-property@release
+        with: 
+           path: '${inputs.path-to-json}'
+           prop_path: 'version'
+      - name: Install NPM dependencies
+        shell: bash
+        run: | 
+          if [[ ${inputs.repository-type} = "typescript)" ]]; then
+            if [[ -n ${inputs.nested-folder} ]]
+              then
+                 cd ${inputs.nested-folder}
+              fi
+              npm install
+              rsync -arv ${inputs.included-files} ./${inputs.source-directory}
+          elif [[ ${inputs.repository-type} = "python)" ]]; then
+              if [[ -n ${inputs.nested-folder} ]]
+              then
+                 cd ${inputs.nested-folder}
+              fi
+              rsync -arv ${inputs.included-files} ./${inputs.source-directory}
+          elif [[ ${inputs.repository-type} = "layer)" ]]; then
+              exit 0
+          else
+              exit 1
+          fi
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          directory: ./${inputs.source-directory}
+          filename: '${inputs.repository-name}-${{steps.version.outputs.prop}}.zip'
+      - name: Creatinng txt file with version
+        run: |
+          cd ${inputs.source-directory}
+          touch ${inputs.repository-name}.txt
+          echo "${{steps.version.outputs.prop}}" >> ${inputs.repository-name}.txt
+      - name: Upload Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{steps.version.outputs.prop}}
+          body: ${{ github.event.head_commit.message }}
+          artifacts: ./${inputs.source-directory}/${inputs.repository-name}-${{steps.version.outputs.prop}}.zip
+          token: ${{ ${inputs.token} }}
+      - name: Send zip file to S3 staging
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args:  --delete --exclude '*' --include ${inputs.repository-name}-${{steps.version.outputs.prop}}.zip --include ${inputs.repository-name}-version.txt
+        env:
+          AWS_S3_BUCKET: 'hero-labs-lambdas-staging'
+          AWS_ACCESS_KEY_ID: ${inputs.access-key-staging}
+          AWS_SECRET_ACCESS_KEY: ${inputs.secret-key-staging}
+          SOURCE_DIR: './${inputs.source-directory}'
+      - name: Send zip file to S3 production
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args:  --delete --exclude '*' --include ${inputs.repository-name}-${{steps.version.outputs.prop}}.zip
+        env:
+          AWS_S3_BUCKET: 'hero-labs-lambdas-production'
+          AWS_ACCESS_KEY_ID: ${inputs.access-key-production}
+          AWS_SECRET_ACCESS_KEY: ${inputs.secret-key-production}
+          SOURCE_DIR: './${inputs.source-directory}'
