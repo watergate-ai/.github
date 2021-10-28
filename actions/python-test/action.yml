@@ -8,7 +8,12 @@ inputs:
    path:
      description: "Path to test files"
      required: true
-
+   discover:
+     description: "True if the repository supports discover tests command"
+     required: false
+   test-file-name:
+     description: "Test file name, only needed if the repository does not use discover tests command"
+     required: false
 runs:
    using: "composite"
    steps:
@@ -25,4 +30,10 @@ runs:
            pip install -r requirements.txt --use-deprecated=legacy-resolver
        - name: Run Tests
          shell: bash
-         run: python -m unittest discover ${{inputs.path}}
+         run: |
+             if [ -n "${{inputs.discover}}" ]; then
+                 python -m unittest discover ${{inputs.path}}
+             else
+               cd ${{inputs.path}}
+               python -m unittest ${{inputs.test-file-name}}
+             fi

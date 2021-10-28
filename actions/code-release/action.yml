@@ -35,17 +35,19 @@ inputs:
    source-directory:
      description: "Name of repository needed to create code packages"
      required: true
-   included-files:
+   exclude-files:
      description: "List of folders/files included in the release"
-     required: false
+     required: true
    nested-folder:
      description: "Folder name if files are nested"
+     required: false
+   s3-layer-folder:
+     description: "S3 layers folder"
      required: false
 
 runs:
    using: "composite"
    steps:
-    steps:
       - uses: actions/checkout@v2.3.4
         with:
           fetch-depth: 0
@@ -53,62 +55,65 @@ runs:
         id: version
         uses: notiz-dev/github-action-json-property@release
         with: 
-           path: '${inputs.path-to-json}'
+           path: '${{inputs.path-to-json}}'
            prop_path: 'version'
       - name: Install NPM dependencies and create folder with files used in subsequent steps
         shell: bash
         run: | 
-          if [[ ${inputs.repository-type} = "typescript)" ]]; then
-            if [[ -n ${inputs.nested-folder} ]]
-              then
-                 cd ${inputs.nested-folder}
-              fi
-              npm install
-              rsync -arv ${inputs.included-files} ./${inputs.source-directory}
-          elif [[ ${inputs.repository-type} = "python)" ]]; then
-              if [[ -n ${inputs.nested-folder} ]]
-              then
-                 cd ${inputs.nested-folder}
-              fi
-              rsync -arv ${inputs.included-files} ./${inputs.source-directory}
-          elif [[ ${inputs.repository-type} = "layer)" ]]; then
-              exit 0
+          if [[ "${{inputs.repository-type}}" = "typescript" ]]; then
+            if [ -n "${{inputs.nested-folder}}" ]; then
+                 cd ${{inputs.nested-folder}}
+                 fi
+            npm install
+            rsync -arv ${{inputs.exclude-files}} ./${{inputs.source-directory}}
+            exit 0
+          elif [[ "${{inputs.repository-type}}" = "python" ]]; then
+            if [ -n "${{inputs.nested-folder}}" ]; then
+                 cd ${{inputs.nested-folder}}
+                 fi
+            rsync -arv ${{inputs.exclude-files}} ./${{inputs.source-directory}}
+            exit 0
+          elif [[ ${{inputs.repository-type}} = "layer" ]]; then
+            exit 0
           else
-              exit 1
+            exit 1
           fi
       - name: Archive files for S3 package
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
-          directory: ./${inputs.source-directory}
-          filename: '${inputs.repository-name}-${{steps.version.outputs.prop}}.zip'
+          directory: ./${{inputs.source-directory}}
+          filename: '${{inputs.repository-name}}-${{steps.version.outputs.prop}}.zip'
       - name: Creat txt file with version number for S3 package
+        shell: bash
         run: |
-          cd ${inputs.source-directory}
-          touch ${inputs.repository-name}.txt
-          echo "${{steps.version.outputs.prop}}" >> ${inputs.repository-name}.txt
+          cd ${{inputs.source-directory}}
+          touch ${{inputs.repository-name}}.txt
+          echo "${{steps.version.outputs.prop}}" >> ${{inputs.repository-name}}.txt
       - name: Upload code under Release tag
         uses: ncipollo/release-action@v1
         with:
           tag: ${{steps.version.outputs.prop}}
           body: ${{ github.event.head_commit.message }}
-          artifacts: ./${inputs.source-directory}/${inputs.repository-name}-${{steps.version.outputs.prop}}.zip
-          token: ${{ ${inputs.token} }}
+          artifacts: ${{inputs.source-directory}}/${{inputs.repository-name}}-${{steps.version.outputs.prop}}.zip
+          token: ${{ inputs.token }}
       - name: Send zip file to S3 staging
         uses: jakejarvis/s3-sync-action@master
         with:
-          args:  --delete --exclude '*' --include ${inputs.repository-name}-${{steps.version.outputs.prop}}.zip --include ${inputs.repository-name}-version.txt
+          args:  --delete --exclude '*' --include ${{inputs.repository-name}}-${{steps.version.outputs.prop}}.zip --include ${{inputs.repository-name}}-version.txt
         env:
-          AWS_S3_BUCKET: ${inputs.staging-bucket}
-          AWS_ACCESS_KEY_ID: ${inputs.access-key-staging}
-          AWS_SECRET_ACCESS_KEY: ${inputs.secret-key-staging}
-          SOURCE_DIR: './${inputs.source-directory}'
+          AWS_S3_BUCKET: ${{inputs.staging-bucket}}
+          AWS_ACCESS_KEY_ID: ${{inputs.access-key-staging}}
+          AWS_SECRET_ACCESS_KEY: ${{inputs.secret-key-staging}}
+          SOURCE_DIR: './${{inputs.source-directory}}'
+          DEST_DIR: '${{inputs.s3-layer-folder}}'
       - name: Send zip file to S3 production
         uses: jakejarvis/s3-sync-action@master
         with:
-          args:  --delete --exclude '*' --include ${inputs.repository-name}-${{steps.version.outputs.prop}}.zip
+          args:  --delete --exclude '*' --include ${{inputs.repository-name}}-${{steps.version.outputs.prop}}.zip
         env:
-          AWS_S3_BUCKET: ${inputs.production-bucket}
-          AWS_ACCESS_KEY_ID: ${inputs.access-key-production}
-          AWS_SECRET_ACCESS_KEY: ${inputs.secret-key-production}
-          SOURCE_DIR: './${inputs.source-directory}'
+          AWS_S3_BUCKET: ${{inputs.production-bucket}}
+          AWS_ACCESS_KEY_ID: ${{inputs.access-key-production}}
+          AWS_SECRET_ACCESS_KEY: ${{inputs.secret-key-production}}
+          SOURCE_DIR: './${{inputs.source-directory}}'
+          DEST_DIR: '${{inputs.s3-layer-folder}}'

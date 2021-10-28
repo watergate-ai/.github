@@ -5,6 +5,15 @@ inputs:
    token:
      description: "Token needed to access files "
      required: true
+   nested-install:
+     description: "Patch to json file if it is in a folder"
+     required: false
+   nested-test:
+     description: "Patch to test file if it is in a folder "
+     required: false
+   compile:
+     description: "True if the code has to be compiled "
+     required: false
 runs:
    using: "composite"
    steps:
@@ -22,10 +31,17 @@ runs:
       - name: Install dependencies
         shell: bash
         run: |
-          npm install 
-          npm run compile
+          if [ -n "${{inputs.nested-install}}" ]; then
+             cd ${{inputs.nested-install}}
+             fi
+          npm install
+          if [ -n "${{inputs.compile}}" ]; then
+             npm run compile
+             fi
       - name: Run Tests
         shell: bash
         run: |
-          cd spec
+          if [ -n "${{inputs.nested-test}}" ]; then
+              cd ${{inputs.nested-test}}
+              fi
           npm run test
