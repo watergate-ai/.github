@@ -69,7 +69,7 @@ runs:
                  fi
             if [ -n "${{inputs.exclude-files}}" ]; then
                  npm install
-                 rsync -arv ${{inputs.exclude-files}} ./${{inputs.source-directory}}
+                 rsync -arv ${{inputs.exclude-files}} . ./${{inputs.source-directory}}
                  fi
             if [ -n "${{inputs.included-files}}" ]; then
                  npm install
@@ -81,7 +81,7 @@ runs:
             if [ -n "${{inputs.nested-folder}}" ]; then
                  cd ${{inputs.nested-folder}}
                  fi
-            rsync -arv ${{inputs.exclude-files}} ./${{inputs.source-directory}}
+            rsync -arv ${{inputs.exclude-files}} . ./${{inputs.source-directory}}
             exit 0
           elif [[ ${{inputs.repository-type}} = "layer" ]]; then
             exit 0
