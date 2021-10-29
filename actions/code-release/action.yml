@@ -36,8 +36,11 @@ inputs:
      description: "Name of repository needed to create code packages"
      required: true
    exclude-files:
+     description: "List of folders/files excluded in the release"
+     required: false
+   included-files:
      description: "List of folders/files included in the release"
-     required: true
+     required: false
    nested-folder:
      description: "Folder name if files are nested"
      required: false
@@ -64,8 +67,15 @@ runs:
             if [ -n "${{inputs.nested-folder}}" ]; then
                  cd ${{inputs.nested-folder}}
                  fi
-            npm install
-            rsync -arv ${{inputs.exclude-files}} ./${{inputs.source-directory}}
+            if [ -n "${{inputs.exclude-files}}" ]; then
+                 npm install
+                 rsync -arv ${{inputs.exclude-files}} ./${{inputs.source-directory}}
+                 fi
+            if [ -n "${{inputs.included-files}}" ]; then
+                 npm install
+                 tsc
+                 rsync -arv ${{inputs.included-files}} ./${{inputs.source-directory}}
+                 fi
             exit 0
           elif [[ "${{inputs.repository-type}}" = "python" ]]; then
             if [ -n "${{inputs.nested-folder}}" ]; then
