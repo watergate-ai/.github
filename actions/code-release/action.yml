@@ -124,16 +124,18 @@ runs:
           AWS_SECRET_ACCESS_KEY: ${{inputs.secret-key-production}}
           SOURCE_DIR: './${{inputs.source-directory}}'
           DEST_DIR: '${{inputs.s3-layer-folder}}'
-    - name: Retrieve lambda name
-      run: |
-          repozitory_name=${{inputs.repository-name}}
-          echo "::set-output name=LAMBDA_NAME::${repozitory_name::-7}"
-      id: lambda_name
-    - name: Lambda code deploy to staging
-      uses: appleboy/lambda-action@master
-      with:
-        aws_access_key_id: ${{inputs.access-key-staging}}
-        aws_secret_access_key: ${{inputs.secret-key-staging}}
-        aws_region: eu-west-2
-        function_name: ${{steps.lambda_name.outputs.LAMBDA_NAME}}
-        zip_file: ${{inputs.source-directory}}/${{inputs.repository-name}}-${{steps.version.outputs.prop}}.zip
+      - name: Retrieve lambda name
+        id: lambda_name
+        shell: bash
+        run: |
+               repozitory_name=${{inputs.repository-name}}
+               echo "::set-output name=LAMBDA_NAME::${repozitory_name::-7}"
+      - name: Lambda code deploy to staging
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{inputs.access-key-staging}}
+            aws_secret_access_key: ${{inputs.secret-key-staging}}
+            aws_region: eu-west-2
+            function_name: ${{steps.lambda_name.outputs.LAMBDA_NAME}}
+            zip_file: ${{inputs.source-directory}}/${{inputs.repository-name}}-${{steps.version.outputs.prop}}.zip
+
