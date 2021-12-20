@@ -76,6 +76,5 @@ runs:
       - name: Lambda code deploy on AWS
         shell: bash
         run: |
-            aws lambda update-function-code --function-name=${{inputs.lambda-name}} --zip-file=fileb://${{inputs.working-folder-name}}/${{inputs.lambda-name}}-lambda-${{steps.version.outputs.prop}}.zip
             aws lambda update-function-code --function-name=${{inputs.lambda-name}} --s3-bucket ${{inputs.s3-bucket}} --s3-key ${{inputs.lambda-name}}-lambda-${{steps.version.outputs.prop}}.zip
             aws lambda tag-resource --resource arn:aws:lambda:eu-west-2:${{inputs.AWS-account-number}}:function:${{inputs.lambda-name}} --tags Version=${{steps.version.outputs.prop}},Name=${{inputs.lambda-name}}
