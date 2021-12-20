@@ -70,8 +70,8 @@ runs:
       - name: Configure AWS Credentials  
         uses: aws-actions/configure-aws-credentials@v1
         with:
-            aws-access-key-id: ${{inputs.access-key-staging}}
-            aws-secret-access-key: ${{inputs.secret-key-staging}}
+            aws-access-key-id: ${{inputs.access-key}}
+            aws-secret-access-key: ${{inputs.secret-key}}
             aws-region: eu-west-2
       - name: Lambda code deploy on AWS
         shell: bash
