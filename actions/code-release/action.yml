@@ -49,6 +49,7 @@ runs:
            "./package.sh"
         env: 
            VERSION: ${{steps.version.outputs.prop}}
+           GITHUB_TOKEN: ${{ inputs.token }}
       - name: Upload code under Release tag
         if: github.ref == 'refs/heads/master'
         uses: ncipollo/release-action@v1
