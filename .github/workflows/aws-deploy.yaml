@@ -21,6 +21,12 @@ on:
       CONTAINER_NAME:
         required: true
         type: string
+      SLACK_CHANNEL:
+        required: true
+        type: string
+      SLACK_TITLE:
+        required: true
+        type: string
 
     secrets:
       AWS_ACCESS_KEY:
@@ -120,9 +126,9 @@ jobs:
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: Ivanov Konstantin
+          SLACK_CHANNEL: ${{ inputs.SLACK_CHANNEL }}
           SLACK_COLOR: ${{ env.SLACK_COLOR }} # or a specific color like 'good' or '#ff00ff'
           SLACK_MESSAGE: ${{ github.event.head_commit.message }}
-          SLACK_TITLE: admin-dashboard
+          SLACK_TITLE: ${{ inputs.SLACK_TITLE }}
           SLACK_USERNAME: bot
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
