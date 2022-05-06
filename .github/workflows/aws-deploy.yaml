@@ -1,0 +1,11 @@
+name: Create and Publish Docker Image
+
+on:
+  workflow_call:
+
+jobs:
+  do-something-else:
+    runs-on: ubuntu-latest
+
+    steps:
+    - run: echo "Hello"
