@@ -112,7 +112,7 @@ jobs:
           echo "::set-output name=packageJson::$content"
       - id: status
         run: |
-          if [ "${{fromJson(steps.set_var.outputs.packageJson).services[0].runningCount }}" != "2" ]; then echo "SLACK_COLOR=#ff00ff" >> $GITHUB_ENV ; else echo "SLACK_COLOR=green" >> $GITHUB_ENV ; fi
+          if [ "${{fromJson(steps.set_var.outputs.packageJson).services[0].runningCount }}" != "1" ]; then echo "SLACK_COLOR=#ff00ff" >> $GITHUB_ENV ; else echo "SLACK_COLOR=green" >> $GITHUB_ENV ; fi
       - run: |
           echo "${{ env.SLACK_COLOR }}"
 
