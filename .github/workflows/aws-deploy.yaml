@@ -130,6 +130,8 @@ jobs:
           if [ "${{fromJson(steps.set_var.outputs.packageJson).services[0].runningCount }}" != "1" ]; then echo "SLACK_COLOR=#ff00ff" >> $GITHUB_ENV ; else echo "SLACK_COLOR=#00ff00" >> $GITHUB_ENV ; fi
       - run: |
           echo "${{ env.SLACK_COLOR }}"
+      - run: |
+          echo "GIT_MESSAGE=`git log -1 --pretty="%an%n%B"`" >> $GITHUB_ENV
 
         # https://github.com/marketplace/actions/slack-notify
       - name: Slack Notification
@@ -137,7 +139,7 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ inputs.SLACK_CHANNEL }}
           SLACK_COLOR: ${{ env.SLACK_COLOR }} # or a specific color like 'good' or '#ff00ff', #00ff00
-          SLACK_MESSAGE: ${{ github.event.head_commit.message }}
+          SLACK_MESSAGE: ${{ env.GIT_MESSAGE }}
           SLACK_TITLE: ${{ inputs.SLACK_TITLE }}
           SLACK_USERNAME: bot
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
