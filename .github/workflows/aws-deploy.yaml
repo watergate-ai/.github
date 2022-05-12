@@ -89,6 +89,7 @@ jobs:
       #     # cache-to: type=gha,mode=max
       - name: Build and push docker container if this container is not exists
         run: |
+          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}/${{ inputs.ECR_REPOSITORY }}
           if docker manifest inspect  ${{ steps.login-ecr.outputs.registry }}/${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
             echo "Container ${{ steps.login-ecr.outputs.registry }}/${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
           else 
