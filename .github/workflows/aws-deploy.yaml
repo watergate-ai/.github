@@ -131,7 +131,7 @@ jobs:
       - run: |
           echo "${{ env.SLACK_COLOR }}"
       - run: |
-          echo "GIT_MESSAGE=`git log -1 --pretty="%an%n%B"`" >> $GITHUB_ENV
+          echo "GIT_MESSAGE=`git log -1 --pretty="%B"`" >> $GITHUB_ENV
 
         # https://github.com/marketplace/actions/slack-notify
       - name: Slack Notification
