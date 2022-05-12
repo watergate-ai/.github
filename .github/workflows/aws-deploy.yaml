@@ -47,8 +47,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
       
       # https://github.com/marketplace/actions/install-aws-cli-action
       - name: install-aws-cli
