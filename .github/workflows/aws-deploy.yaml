@@ -109,7 +109,7 @@ jobs:
       # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#environment-files
       - id: set_var
         run: |
-          content=`aws --region eu-west-2 ecs describe-services --services admin-dashboard --cluster hl-stage`
+          content=`aws --region eu-west-2 ecs describe-services --services ${{ inputs.ECS_SERVICE }} --cluster ${{ inputs.ECS_CLUSTER }}`
           # the following lines are only required for multi line json
           content="${content//'%'/'%25'}"
           content="${content//$'\n'/'%0A'}"
