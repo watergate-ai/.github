@@ -27,6 +27,9 @@ on:
       SLACK_TITLE:
         required: true
         type: string
+      SLACK_MESSAGE:
+        required: true
+        type: string
 
     secrets:
       AWS_ACCESS_KEY:
@@ -116,9 +119,6 @@ jobs:
       - name: Setting color for slack
         run: |
           echo "${{ env.SLACK_COLOR }}"
-      - name: Setting message for Slakc
-        run: |
-          echo "GIT_MESSAGE=`git log -1 --pretty="%B"`" >> $GITHUB_ENV
 
         # https://github.com/marketplace/actions/slack-notify
       - name: Slack Notification
@@ -126,7 +126,7 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ inputs.SLACK_CHANNEL }}
           SLACK_COLOR: ${{ env.SLACK_COLOR }} # or a specific color like 'good' or '#db1251', #039c27
-          SLACK_MESSAGE: ${{ env.GIT_MESSAGE }}
+          SLACK_MESSAGE: ${{ inputs.SLACK_MESSAGE }}
           SLACK_TITLE: ${{ inputs.SLACK_TITLE }}
           SLACK_USERNAME: bot
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
