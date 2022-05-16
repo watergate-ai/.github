@@ -76,11 +76,11 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          if docker manifest inspect  ${ECR_REGISTRY}/admin-dashboard:${{ github.sha }} ; then 
-            echo "Container ${ECR_REGISTRY}/admin-dashboard:${{ github.sha }} exists"
+          if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
+            echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
           else 
-            docker build . -t ${ECR_REGISTRY}/admin-dashboard:${{ github.sha }}
-            docker push ${ECR_REGISTRY}/admin-dashboard:${{ github.sha }}
+            docker build . -t ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
+            docker push ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
           fi
           
       # https://github.com/aws-actions/amazon-ecs-render-task-definition
