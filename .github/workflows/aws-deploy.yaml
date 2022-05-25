@@ -3,6 +3,10 @@ name: Deploy to Amazon ECS
 on:
   workflow_call:
     inputs:
+      DOCKER_BUILD_OPTIONS:
+        required: false
+        type: string
+        default: ""
       AWS_REGION:
         required: true
         type: string
@@ -46,7 +50,6 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    environment: stage
 
     steps:
       - name: Checkout
@@ -79,7 +82,7 @@ jobs:
           if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
             echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
           else 
-            docker build . -t ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
+            docker build . ${{ inputs.DOCKER_BUILD_OPTIONS }} -t ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
             docker push ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
           fi
           
@@ -129,6 +132,7 @@ jobs:
           SLACK_COLOR: "#039c27" 
           SLACK_TITLE: ${{ inputs.SLACK_TITLE }}
           SLACK_USERNAME: bot
+          SLACK_MESSAGE: ""
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
       # Skack notification if something is bad
@@ -142,3 +146,4 @@ jobs:
           SLACK_TITLE: ${{ inputs.SLACK_TITLE }}
           SLACK_USERNAME: bot
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: ""
