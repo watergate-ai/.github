@@ -42,7 +42,6 @@ on:
         required: true
       DOCKER_BUILD_OPTIONS_SECRET:
         required: false
-        default: ""
 
       # https://api.slack.com/apps/A03D6DJ3UD9/incoming-webhooks?
       SLACK_WEBHOOK:
