@@ -137,6 +137,7 @@ jobs:
           SLACK_USERNAME: bot
           SLACK_MESSAGE: ""
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          MSG_MINIMAL: Actions URL, Commit
 
       # Skack notification if something is bad
       # https://github.com/marketplace/actions/slack-notify
@@ -150,3 +151,4 @@ jobs:
           SLACK_USERNAME: bot
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: ""
+          MSG_MINIMAL: Actions URL, Commit
