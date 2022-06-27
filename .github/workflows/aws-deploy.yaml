@@ -34,6 +34,15 @@ on:
       SLACK_MESSAGE:
         required: true
         type: string
+      ENVIRONMENT:
+        required: false
+        type: string
+      WORKFLOW_SKIP_CHECKOUT:
+        required: false
+        type: string
+      WORKFLOW_USE_ARTIFACTS:
+        required: false
+        type: string
 
     secrets:
       AWS_ACCESS_KEY:
@@ -47,6 +56,12 @@ on:
       SLACK_WEBHOOK:
         required: true
 
+      HL_GITHUB_TOKEN:
+        required: false
+
+      SECRET_ENVIRONMENT:
+        required: false
+
 jobs:
 
   deploy:
@@ -55,9 +70,33 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout with submodules
+        uses: actions/checkout@v3 
+        if: ${{ env.HL_GITHUB_TOKEN != '' && env.WORKFLOW_SKIP_CHECKOUT == '' }}
+        env:
+          HL_GITHUB_TOKEN: ${{ secrets.HL_GITHUB_TOKEN }}
+          WORKFLOW_SKIP_CHECKOUT: ${{ inputs.WORKFLOW_SKIP_CHECKOUT }}
+        with:
+          token: ${{ secrets.HL_GITHUB_TOKEN }}
+          submodules: recursive
       
+      - name: Checkout without submodules 
+        uses: actions/checkout@v3 
+        if: ${{ env.HL_GITHUB_TOKEN == '' && env.WORKFLOW_SKIP_CHECKOUT == '' }}
+        env:
+          HL_GITHUB_TOKEN: ${{ secrets.HL_GITHUB_TOKEN }}
+          WORKFLOW_SKIP_CHECKOUT: ${{ inputs.WORKFLOW_SKIP_CHECKOUT }}
+      
+      # Download artifacts if needed
+      - name: Retrieve artifact
+        uses: actions/download-artifact@v2
+        if: ${{ env.WORKFLOW_USE_ARTIFACTS == 'true' }}
+        env:
+          WORKFLOW_USE_ARTIFACTS: ${{ inputs.WORKFLOW_USE_ARTIFACTS }}
+        with:
+          name: artifact
+          path: artifacts
+
       # https://github.com/marketplace/actions/install-aws-cli-action
       - name: install-aws-cli
         id: install-aws-cli
@@ -97,6 +136,9 @@ jobs:
           task-definition: ${{ inputs.ECS_TASK_DEFINITION }}
           container-name: ${{ inputs.CONTAINER_NAME }}
           image: ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
+          environment-variables: |
+            ${{ secrets.SECRET_ENVIRONMENT }}
+            ${{ inputs.ENVIRONMENT }}
 
       # https://github.com/aws-actions/amazon-ecs-deploy-task-definition
       - name: Deploy Amazon ECS task definition
