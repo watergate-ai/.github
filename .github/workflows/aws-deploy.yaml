@@ -118,6 +118,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and push docker container if this container is not exists
+        timeout-minutes: 10
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
