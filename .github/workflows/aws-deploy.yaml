@@ -67,7 +67,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: Checkout with submodules
@@ -118,6 +118,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and push docker container if this container is not exists
+        timeout-minutes: 10
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
@@ -143,6 +144,7 @@ jobs:
       # https://github.com/aws-actions/amazon-ecs-deploy-task-definition
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        timeout-minutes: 8
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ inputs.ECS_SERVICE }}
