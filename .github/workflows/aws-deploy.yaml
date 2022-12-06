@@ -43,6 +43,9 @@ on:
       WORKFLOW_USE_ARTIFACTS:
         required: false
         type: string
+      WORKFLOW_USE_ENV:
+        required: false
+        type: string
 
     secrets:
       AWS_ACCESS_KEY:
@@ -117,11 +120,39 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push docker container if this container is not exists
+      - name: Build and push docker container if this container is not exists (with .build_env)
         timeout-minutes: 10
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        shell: bash
+        if: ${{ env.WORKFLOW_USE_ARTIFACTS != '' }}
         run: |
+          # Load env variables before building docker image
+          echo "${{ inputs.ENVIRONMENT }}" > .build_env_pre
+          echo "${{ secrets.SECRET_ENVIRONMENT }}" >> .build_env_pre
+          for i in $(cat .build_env_pre); do echo "export $i" >> .build_env ; done
+          echo "Building dockerfile:"
+          # Docker build image
+          if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
+            echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
+          else 
+            docker build . ${{ inputs.DOCKER_BUILD_OPTIONS }} ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }} -t ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
+            docker push ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
+          fi
+
+      - name: Build and push docker container if this container is not exists (without .build_env)
+        timeout-minutes: 10
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        shell: bash
+        if: ${{ env.WORKFLOW_USE_ARTIFACTS == '' }}
+        run: |
+          # Load env variables before building docker image
+          echo "${{ inputs.ENVIRONMENT }}" > .build_env_pre
+          echo "${{ secrets.SECRET_ENVIRONMENT }}" >> .build_env_pre
+          for i in $(cat .build_env_pre); do echo "export $i" >> .build_env ; done
+          echo "Building dockerfile:"
+          # Docker build image
           if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
             echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
           else 
