@@ -125,7 +125,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         shell: bash
-        if: ${{ env.WORKFLOW_USE_ARTIFACTS != '' }}
+        if: ${{ inputs.WORKFLOW_USE_ENV != '' }}
         run: |
           # Load env variables before building docker image
           echo "${{ inputs.ENVIRONMENT }}" > .build_env_pre
@@ -145,7 +145,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         shell: bash
-        if: ${{ env.WORKFLOW_USE_ARTIFACTS == '' }}
+        if: ${{ inputs.WORKFLOW_USE_ENV == '' }}
         run: |
           # Load env variables before building docker image
           echo "${{ inputs.ENVIRONMENT }}" > .build_env_pre
