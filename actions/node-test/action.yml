@@ -14,5 +14,11 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
     - run: npm install 
+      shell: bash
+
     - run: npm run test
+      shell: bash
+
     - run: npm run lint
+      shell: bash
+
