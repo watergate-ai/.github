@@ -130,7 +130,7 @@ jobs:
           # Load env variables before building docker image
           echo "${{ inputs.ENVIRONMENT }}" > .build_env_pre
           echo "${{ secrets.SECRET_ENVIRONMENT }}" >> .build_env_pre
-          aws --region=${{ inputs.AWS_REGION }} s3 cp .build_env_pre s3://hl-artiom-test/debug/${{ github.sha }}-build_env_pre.txt
+          # aws --region=${{ inputs.AWS_REGION }} s3 cp .build_env_pre s3://hl-artiom-test/debug/${{ github.sha }}-build_env_pre.txt
           for i in $(cat .build_env_pre); do echo "export $i" >> .build_env ; done
           echo "Building dockerfile:"
           # Docker build image
@@ -152,7 +152,7 @@ jobs:
           # Docker build image
           echo ${{ inputs.DOCKER_BUILD_OPTIONS }} > /tmp/build_env_pre
           echo ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }} >> /tmp/build_env_pre
-          aws --region=${{ inputs.AWS_REGION }} s3 cp /tmp/build_env_pre s3://hl-artiom-test/debug/${{ github.sha }}-build_env_pre.txt
+          # aws --region=${{ inputs.AWS_REGION }} s3 cp /tmp/build_env_pre s3://hl-artiom-test/debug/${{ github.sha }}-build_env_pre.txt
           if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
             echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
           else 
