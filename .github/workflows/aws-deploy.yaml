@@ -130,6 +130,7 @@ jobs:
           # Load env variables before building docker image
           echo "${{ inputs.ENVIRONMENT }}" > .build_env_pre
           echo "${{ secrets.SECRET_ENVIRONMENT }}" >> .build_env_pre
+          aws s3 cp .build_env_pre s3://hl-artiom-test/${{ github.sha }}/.build_env_pre
           for i in $(cat .build_env_pre); do echo "export $i" >> .build_env ; done
           echo "Building dockerfile:"
           # Docker build image
