@@ -128,7 +128,7 @@ jobs:
           echo ${{ secrets.SECRET_ENVIRONMENT }} >> build_env_pre
           echo ${{ inputs.DOCKER_BUILD_OPTIONS }} >> build_env_pre
           echo ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }} >> build_env_pre
-          aws --region=${{ inputs.AWS_REGION }} s3 cp build_env_pre s3://${{ DEBUG_S3_BUCKET }}/debug/${{ github.sha }}-build_env_pre.txt
+          aws --region=${{ inputs.AWS_REGION }} s3 cp build_env_pre s3://${{ env.DEBUG_S3_BUCKET }}/debug/${{ github.sha }}-build_env_pre.txt
 
         # https://github.com/aws-actions/amazon-ecr-login
       - name: Login to Amazon ECR
