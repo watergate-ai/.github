@@ -121,7 +121,7 @@ jobs:
       - name: Debug variables and secrets
         if: ${{ env.DEBUG_S3_BUCKET != '' }}
         env:
-          HL_GITHUB_TOKEN: ${{ secrets.HL_GITHUB_TOKEN }}
+          DEBUG_S3_BUCKET: ${{ inputs.DEBUG_S3_BUCKET }}
         shell: bash
         run: |
           echo ${{ inputs.ENVIRONMENT }} > build_env_pre
