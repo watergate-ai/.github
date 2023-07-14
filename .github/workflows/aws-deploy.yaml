@@ -46,6 +46,9 @@ on:
       WORKFLOW_USE_ENV:
         required: false
         type: string
+      DEBUG_S3_BUCKET:
+        required: false
+        type: string
 
     secrets:
       AWS_ACCESS_KEY:
@@ -82,7 +85,7 @@ jobs:
         with:
           token: ${{ secrets.HL_GITHUB_TOKEN }}
           submodules: recursive
-      
+
       - name: Checkout without submodules 
         uses: actions/checkout@v3 
         if: ${{ env.HL_GITHUB_TOKEN == '' && env.WORKFLOW_SKIP_CHECKOUT == '' }}
@@ -115,6 +118,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: ${{ inputs.AWS_REGION }}
 
+      - name: Debug variables and secrets
+        if: ${{ env.DEBUG_S3_BUCKET != '' }}
+        env:
+          HL_GITHUB_TOKEN: ${{ secrets.HL_GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          echo ${{ inputs.ENVIRONMENT }} > build_env_pre
+          echo ${{ secrets.SECRET_ENVIRONMENT }} >> build_env_pre
+          echo ${{ inputs.DOCKER_BUILD_OPTIONS }} >> build_env_pre
+          echo ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }} >> build_env_pre
+          aws --region=${{ inputs.AWS_REGION }} s3 cp build_env_pre s3://${{ DEBUG_S3_BUCKET }}/debug/${{ github.sha }}-build_env_pre.txt
+
         # https://github.com/aws-actions/amazon-ecr-login
       - name: Login to Amazon ECR
         id: login-ecr
@@ -128,8 +143,6 @@ jobs:
         if: ${{ inputs.WORKFLOW_USE_ENV != '' }}
         run: |
           # Load env variables before building docker image
-          echo "${{ inputs.ENVIRONMENT }}" > .build_env_pre
-          echo "${{ secrets.SECRET_ENVIRONMENT }}" >> .build_env_pre
           for i in $(cat .build_env_pre); do echo "export $i" >> .build_env ; done
           echo "Building dockerfile:"
           # Docker build image
@@ -149,8 +162,6 @@ jobs:
         run: |
           echo "Building dockerfile:"
           # Docker build image
-          echo ${{ inputs.DOCKER_BUILD_OPTIONS }} > /tmp/build_env_pre
-          echo ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }} >> /tmp/build_env_pre
           if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
             echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
           else 
