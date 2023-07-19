@@ -210,32 +210,32 @@ jobs:
         run: |
           echo "${{ env.SLACK_COLOR }}"
 
-      # Skack notification if everything is good
-      - id: slack
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          # The following message update step does not accept a channel name.
-          # Setting a channel ID here for consistency is highly recommended.
-          channel-id: ${{ inputs.SLACK_CHANNEL }}
-          payload: |
-            {
-              "text": "Deployment completed ${{ inputs.SLACK_TITLE }}",
-              "attachments": [
-                {
-                  "pretext": "Deployment completed ${{ inputs.SLACK_TITLE }}",
-                  "color": "039c27",
-                  "fields": [
-                    {
-                      "title": "Status",
-                      "short": true,
-                      "value": "Completed ${{ inputs.SLACK_TITLE }}"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_WEBHOOK }}
+#      # Skack notification if everything is good
+#      - id: slack
+#        uses: slackapi/slack-github-action@v1.24.0
+#        with:
+#          # The following message update step does not accept a channel name.
+#          # Setting a channel ID here for consistency is highly recommended.
+#          channel-id: ${{ inputs.SLACK_CHANNEL }}
+#          payload: |
+#            {
+#              "text": "Deployment completed ${{ inputs.SLACK_TITLE }}",
+#              "attachments": [
+#                {
+#                  "pretext": "Deployment completed ${{ inputs.SLACK_TITLE }}",
+#                  "color": "039c27",
+#                  "fields": [
+#                    {
+#                      "title": "Status",
+#                      "short": true,
+#                      "value": "Completed ${{ inputs.SLACK_TITLE }}"
+#                    }
+#                  ]
+#                }
+#              ]
+#            }
+#        env:
+#          SLACK_BOT_TOKEN: ${{ secrets.SLACK_WEBHOOK }}
 
 #      # Skack notification if something is bad
 #      # https://github.com/marketplace/actions/slack-notify
