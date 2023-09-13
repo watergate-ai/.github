@@ -3,6 +3,9 @@ name: Deploy to Amazon ECS
 on:
   workflow_call:
     inputs:
+      VERSION:
+        required: true
+        type: string
       DOCKER_BUILD_OPTIONS:
         required: false
         type: string
@@ -135,7 +138,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push docker container if this container is not exists (with .build_env)
+      - name: Build and push docker container if this container does not exist (with .build_env)
         timeout-minutes: 10
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -146,14 +149,18 @@ jobs:
           for i in $(cat .build_env_pre); do echo "export $i" >> .build_env ; done
           echo "Building dockerfile:"
           # Docker build image
-          if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
-            echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
+          if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }} ; then 
+            echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }} exists"
           else 
-            docker build . ${{ inputs.DOCKER_BUILD_OPTIONS }} ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }} -t ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
-            docker push ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
+            docker build \
+            --build-arg VERSION=${{ inputs.VERSION }} \
+            --tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ inputs.VERSION }} \
+            --tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest \
+            . ${{ inputs.DOCKER_BUILD_OPTIONS }} ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }}
+            docker push --all-tags ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
           fi
 
-      - name: Build and push docker container if this container is not exists (without .build_env)
+      - name: Build and push docker container if this container does not exist (without .build_env)
         timeout-minutes: 10
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -162,11 +169,15 @@ jobs:
         run: |
           echo "Building dockerfile:"
           # Docker build image
-          if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} ; then 
-            echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }} exists"
+          if docker manifest inspect  ${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }} ; then 
+            echo "Container ${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }} exists"
           else 
-            docker build . ${{ inputs.DOCKER_BUILD_OPTIONS }} ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }} -t ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
-            docker push ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
+            docker build \
+            --build-arg VERSION=${{ inputs.VERSION }} \
+            --tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ inputs.VERSION }} \
+            --tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest \
+            . ${{ inputs.DOCKER_BUILD_OPTIONS }} ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }}
+            docker push --all-tags ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
           fi
           
       # https://github.com/aws-actions/amazon-ecs-render-task-definition
@@ -176,7 +187,7 @@ jobs:
         with:
           task-definition: ${{ inputs.ECS_TASK_DEFINITION }}
           container-name: ${{ inputs.CONTAINER_NAME }}
-          image: ${{ inputs.ECR_REPOSITORY }}:${{ github.sha }}
+          image: ${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }}
           environment-variables: |
             ${{ secrets.SECRET_ENVIRONMENT }}
             ${{ inputs.ENVIRONMENT }}
