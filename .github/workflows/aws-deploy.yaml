@@ -154,10 +154,10 @@ jobs:
           else 
             docker build \
             --build-arg VERSION=${{ inputs.VERSION }} \
-            --tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ inputs.VERSION }} \
-            --tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest \
+            --tag ${{ env.ECR_REGISTRY }}/${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }} \
+            --tag ${{ env.ECR_REGISTRY }}/${{ inputs.ECR_REPOSITORY }}:latest \
             . ${{ inputs.DOCKER_BUILD_OPTIONS }} ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }}
-            docker push --all-tags ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+            docker push --all-tags ${{ env.ECR_REGISTRY }}/${{ inputs.ECR_REPOSITORY }}
           fi
 
       - name: Build and push docker container if this container does not exist (without .build_env)
@@ -169,15 +169,15 @@ jobs:
         run: |
           echo "Building dockerfile:"
           # Docker build image
-          if docker manifest inspect  ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ inputs.VERSION }} ; then 
-            echo "Container ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ inputs.VERSION }} exists"
+          if docker manifest inspect  ${{ env.ECR_REGISTRY }}/${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }} ; then 
+            echo "Container ${{ env.ECR_REGISTRY }}/${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }} exists"
           else 
             docker build \
             --build-arg VERSION=${{ inputs.VERSION }} \
-            --tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ inputs.VERSION }} \
-            --tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest \
+            --tag ${{ env.ECR_REGISTRY }}/${{ inputs.ECR_REPOSITORY }}:${{ inputs.VERSION }} \
+            --tag ${{ env.ECR_REGISTRY }}/${{ inputs.ECR_REPOSITORY }}:latest \
             . ${{ inputs.DOCKER_BUILD_OPTIONS }} ${{ secrets.DOCKER_BUILD_OPTIONS_SECRET }}
-            docker push --all-tags ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+            docker push --all-tags ${{ env.ECR_REGISTRY }}/${{ inputs.ECR_REPOSITORY }}
           fi
           
       # https://github.com/aws-actions/amazon-ecs-render-task-definition
