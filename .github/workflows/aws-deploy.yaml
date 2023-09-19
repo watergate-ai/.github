@@ -96,6 +96,8 @@ jobs:
         env:
           HL_GITHUB_TOKEN: ${{ secrets.HL_GITHUB_TOKEN }}
           WORKFLOW_SKIP_CHECKOUT: ${{ inputs.WORKFLOW_SKIP_CHECKOUT }}
+        with:
+          ref: ${{ inputs.VERSION }}
       
       # Download artifacts if needed
       - name: Retrieve artifact
@@ -104,7 +106,6 @@ jobs:
         env:
           WORKFLOW_USE_ARTIFACTS: ${{ inputs.WORKFLOW_USE_ARTIFACTS }}
         with:
-          ref: ${{ inputs.VERSION }}
           name: artifact
           path: artifacts
 
