@@ -188,7 +188,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@1
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ inputs.ECS_TASK_DEFINITION }}
           container-name: ${{ inputs.CONTAINER_NAME }}
