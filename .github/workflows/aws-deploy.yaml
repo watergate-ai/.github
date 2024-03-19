@@ -252,3 +252,13 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: ""
           MSG_MINIMAL: Actions URL, Commit
+
+      # Google Chat Notification
+      # https://github.com/marketplace/actions/google-chat-notification
+      - name: Google Chat Notification
+        uses: Co-qn/google-chat-notification@releases/v1
+        with:
+          name: ${{ inputs.SLACK_TITLE }}
+          url: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
+          status: ${{ job.status }}
+        if: always()
