@@ -65,6 +65,9 @@ on:
       SLACK_WEBHOOK:
         required: true
 
+      GOOGLE_CHAT_WEBHOOK:
+        required: false
+
       HL_GITHUB_TOKEN:
         required: false
 
