@@ -278,10 +278,10 @@ jobs:
           title: ${{ inputs.SLACK_TITLE }}
           subtitle: testing alternative action
           imageUrl: https://avatars.githubusercontent.com/u/25328232?v=4
-          imageType: SQUARE
-          imageAltText: Alternative image text
+          imageType: CIRCLE
+          imageAltText: Ups
           createDefaultSection: true
-          collapsibleDefaultSection: true
+          collapsibleDefaultSection: false
           uncollapsibleWidgetsCount: 3
           #additionalSections: '[{"header": "Additional Section", "collapsible": true, "widgets": [{"decoratedText": {"startIcon": {"knownIcon": "STAR"},"text": "Additional Section"}}] }]'
           threadKey: ${{ github.event.number }}
