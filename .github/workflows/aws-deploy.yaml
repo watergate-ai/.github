@@ -266,11 +266,11 @@ jobs:
           status: ${{ job.status }}
         if: always()
 
-      # Google Chat Notification - testing aternative
+      # Google Chat Notification - testing alternative
       # https://github.com/marketplace/actions/google-chat-notification-action
       - name: Google Chat Notification alternative
         id: g-chat-notification-alternative
-        if: always() # only send notification in case of failure
+        if: always()
         uses: SimonScholz/google-chat-action@main
         with:
           webhookUrl: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
