@@ -280,8 +280,8 @@ jobs:
           imageUrl: https://avatars.githubusercontent.com/u/25328232?v=4
           imageType: SQUARE
           imageAltText: Alternative image text
-          createDefaultSection: false
-          collapsibleDefaultSection: false
+          createDefaultSection: true
+          collapsibleDefaultSection: true
           uncollapsibleWidgetsCount: 3
-          additionalSections: '[{"header": "Additional Section", "collapsible": true, "widgets": [{"decoratedText": {"startIcon": {"knownIcon": "STAR"},"text": "Additional Section"}}] }]'
+          #additionalSections: '[{"header": "Additional Section", "collapsible": true, "widgets": [{"decoratedText": {"startIcon": {"knownIcon": "STAR"},"text": "Additional Section"}}] }]'
           threadKey: ${{ github.event.number }}
