@@ -265,3 +265,23 @@ jobs:
           url: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
           status: ${{ job.status }}
         if: always()
+
+      # Google Chat Notification - testing aternative
+      # https://github.com/marketplace/actions/google-chat-notification-action
+      - name: Google Chat Notification alternative
+        id: g-chat-notification-alternative
+        if: always() # only send notification in case of failure
+        uses: SimonScholz/google-chat-action@main
+        with:
+          webhookUrl: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
+          jobStatus: ${{ job.status }}
+          title: ${{ inputs.SLACK_TITLE }}
+          subtitle: testing alternative action
+          imageUrl: https://avatars.githubusercontent.com/u/25328232?v=4
+          imageType: SQUARE
+          imageAltText: Alternative image text
+          createDefaultSection: false
+          collapsibleDefaultSection: false
+          uncollapsibleWidgetsCount: 3
+          additionalSections: '[{"header": "Additional Section", "collapsible": true, "widgets": [{"decoratedText": {"startIcon": {"knownIcon": "STAR"},"text": "Additional Section"}}] }]'
+          threadKey: ${{ github.event.number }}
