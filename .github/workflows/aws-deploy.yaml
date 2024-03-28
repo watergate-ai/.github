@@ -272,5 +272,5 @@ jobs:
           createDefaultSection: true
           collapsibleDefaultSection: false
           uncollapsibleWidgetsCount: 3
-          additionalSections: '[{"header": "Details", "collapsible": true, "widgets": [{"decoratedText": {"startIcon": {"knownIcon": "STAR"},"text": ${{ github.event.pull_request.user.login }} }}] }]'
+          #additionalSections: '[{"header": "Details", "collapsible": true, "widgets": [{"decoratedText": {"startIcon": {"knownIcon": "STAR"},"text": "${{ github.event.pull_request.user.login }}" }}] }]'
           threadKey: ${{ github.event.number }}
