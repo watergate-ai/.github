@@ -40,7 +40,10 @@ on:
       DEBUG_S3_BUCKET:
         required: false
         type: string
-
+      GCHAT_TITLE:
+        required: true
+        type: string
+        
     secrets:
       AWS_ACCESS_KEY:
         required: true
@@ -202,7 +205,7 @@ jobs:
         with:
           webhookUrl: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
           jobStatus: ${{ job.status }}
-          title: ${{ inputs.SLACK_TITLE }}
+          title: ${{ inputs.GCHAT_TITLE }}
           subtitle: GitHub Actions deployment
           imageUrl: https://avatars.githubusercontent.com/u/25328232?v=4
           imageType: CIRCLE
