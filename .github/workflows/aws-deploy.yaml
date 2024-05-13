@@ -25,15 +25,6 @@ on:
       CONTAINER_NAME:
         required: true
         type: string
-      SLACK_CHANNEL:
-        required: true
-        type: string
-      SLACK_TITLE:
-        required: true
-        type: string
-      SLACK_MESSAGE:
-        required: true
-        type: string
       ENVIRONMENT:
         required: false
         type: string
@@ -57,10 +48,6 @@ on:
         required: true
       DOCKER_BUILD_OPTIONS_SECRET:
         required: false
-
-      # https://api.slack.com/apps/A03D6DJ3UD9/incoming-webhooks?
-      SLACK_WEBHOOK:
-        required: true
 
       GOOGLE_CHAT_WEBHOOK:
         required: true
@@ -205,40 +192,6 @@ jobs:
           content="${content//$'\r'/'%0D'}"
           # end of optional handling for multi line json
           echo "::set-output name=packageJson::$content"
-      - name: Checking ECS task status
-        id: status
-        run: |
-          if [ "${{fromJson(steps.set_var.outputs.packageJson).services[0].runningCount }}" != "1" ]; then echo "SLACK_COLOR=#db1251" >> $GITHUB_ENV ; else echo "SLACK_COLOR=#039c27" >> $GITHUB_ENV ; fi
-      - name: Setting color for slack
-        run: |
-          echo "${{ env.SLACK_COLOR }}"
-
-      # Skack notification if everything is good
-      # https://github.com/marketplace/actions/slack-notify
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: ${{ inputs.SLACK_CHANNEL }}
-          SLACK_COLOR: "#039c27" 
-          SLACK_TITLE: ${{ inputs.SLACK_TITLE }}
-          SLACK_USERNAME: bot
-          SLACK_MESSAGE: ""
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          MSG_MINIMAL: Actions URL, Commit
-
-      # Skack notification if something is bad
-      # https://github.com/marketplace/actions/slack-notify
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        if: ${{ failure() }}
-        env:
-          SLACK_CHANNEL: ${{ inputs.SLACK_CHANNEL }}
-          SLACK_COLOR: "#db1251" 
-          SLACK_TITLE: ${{ inputs.SLACK_TITLE }}
-          SLACK_USERNAME: bot
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: ""
-          MSG_MINIMAL: Actions URL, Commit
 
       # Google Chat Notification - testing alternative
       # https://github.com/marketplace/actions/google-chat-notification-action
