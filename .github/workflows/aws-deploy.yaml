@@ -62,6 +62,9 @@ on:
       SLACK_WEBHOOK:
         required: true
 
+      GOOGLE_CHAT_WEBHOOK:
+        required: true
+
       HL_GITHUB_TOKEN:
         required: false
 
@@ -236,3 +239,23 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: ""
           MSG_MINIMAL: Actions URL, Commit
+
+      # Google Chat Notification - testing alternative
+      # https://github.com/marketplace/actions/google-chat-notification-action
+      - name: Google Chat Notification alternative
+        id: g-chat-notification-alternative
+        if: always()
+        uses: SimonScholz/google-chat-action@main
+        with:
+          webhookUrl: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
+          jobStatus: ${{ job.status }}
+          title: ${{ inputs.SLACK_TITLE }}
+          subtitle: GitHub Actions deployment
+          imageUrl: https://avatars.githubusercontent.com/u/25328232?v=4
+          imageType: CIRCLE
+          imageAltText: Ups
+          createDefaultSection: true
+          collapsibleDefaultSection: false
+          uncollapsibleWidgetsCount: 3
+          #additionalSections: '[{"header": "Details", "collapsible": true, "widgets": [{"decoratedText": {"startIcon": {"knownIcon": "STAR"},"text": "${{ github.event.pull_request.user.login }}" }}] }]'
+          threadKey: ${{ github.event.number }}
