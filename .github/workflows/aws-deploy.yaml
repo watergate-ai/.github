@@ -98,7 +98,7 @@ jobs:
       
       # Download artifacts if needed
       - name: Retrieve artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4 # Updated from v2 due to deprecation: https://github.blog/changelog/2024-02-13-deprecation-notice-v1-and-v2-of-the-artifact-actions/
         if: ${{ env.WORKFLOW_USE_ARTIFACTS == 'true' }}
         env:
           WORKFLOW_USE_ARTIFACTS: ${{ inputs.WORKFLOW_USE_ARTIFACTS }}
