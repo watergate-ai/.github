@@ -1,0 +1,257 @@
+name: Semgrep (authorization fail-open)
+
+# Reusable workflow. Callers:
+#
+#   jobs:
+#     semgrep-authz:
+#       uses: watergate-ai/.github/.github/workflows/semgrep-authz.yaml@master
+#
+# WHY A CUSTOM RULESET AND NOT `p/default`.
+# The registry packs are built for the average repo; on this codebase they mostly
+# report style and dependency findings that mix_audit, OSV, RuboCop and Sobelow
+# already cover, and the volume is exactly what teaches a team to scroll past a
+# security check. These two rules target ONE idiom that nothing else here looks
+# for: an authorization path that answers "allowed" when it does not actually
+# know who the caller is, or when the check itself failed.
+#
+# WHY IT DOES NOT FAIL THE BUILD YET.
+# `blocking` defaults to false. These are hand-written rules, and a hand-written
+# rule that has not been calibrated against real branches produces false alarms;
+# once a check cries wolf, the team learns to ignore it, and a check people
+# ignore is worse than no check because it looks like coverage. Run it in report
+# mode for a calibration period (suggested: 4 weeks / ~1 release cycle), collect
+# what it says on real PRs, then flip `blocking: true` AND add the job name to
+# the branch's required status checks. Report mode is not a gate: until the
+# context is required, a red X blocks nothing.
+#
+# BASELINE: measured against the organisation's Ruby/Lua/TypeScript services
+# before rollout, with no false positives. Starting from a known baseline is
+# what makes the later flip to blocking cheap.
+#
+# KNOWN COVERAGE GAP: Elixir.
+# Semgrep OSS cannot scan Elixir - the language is Pro-only, and OSS silently
+# SKIPS such rules ("N rules were skipped because they require Pro"). Elixir
+# repositories are therefore not covered by this workflow; Sobelow remains
+# their gate.
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: "Space-separated paths to scan, relative to the repo root."
+        required: false
+        type: string
+        default: "."
+      blocking:
+        description: >-
+          Fail the job when a rule matches. Leave false during calibration;
+          flip to true only together with making this job a required check.
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  semgrep-authz:
+    # This name is the status-check context. Keep it stable: renaming the job
+    # renames the context, and a required check that no longer reports leaves
+    # every PR waiting on it forever.
+    name: semgrep-authz
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      # Pinned. `latest` would let an engine change land without a PR.
+      #
+      # Semgrep runs as a `docker run` step rather than as the job's `container:`
+      # because the semgrep image is Alpine/musl. Hosted runners inject their own
+      # glibc Node into container jobs to run JavaScript actions, and
+      # actions/checkout and actions/upload-artifact are both JavaScript actions -
+      # so a `container:` job on this image puts the checkout at the mercy of
+      # whether the runner picks its musl Node build. Keeping the job on the host
+      # means the actions run natively and only semgrep runs in the container.
+      SEMGREP_IMAGE: semgrep/semgrep:1.174.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # The rules live in this file rather than in a checked-in .yml because a
+      # reusable workflow ships ONLY its own YAML to the caller - the rest of
+      # this repository is not available to the job, and fetching it would mean
+      # handing a cross-repo token to a security check that must not depend on
+      # one.
+      - name: Write ruleset
+        run: |
+          mkdir -p "$RUNNER_TEMP/wg-semgrep"
+          cat > "$RUNNER_TEMP/wg-semgrep/authz-fail-open.yml" <<'RULES'
+          rules:
+            # ----------------------------------------------------------------
+            # 1. Ruby: an authorization predicate answers "allowed" from rescue.
+            #
+            # Shape: a `?` predicate whose name asserts permission (authorized?,
+            # can_read?, valid_token?) and which returns `true` out of a rescue
+            # clause. The happy path proves access; the rescue path proves
+            # nothing, so returning true there grants access on any error the
+            # clause happens to catch - a failing dependency becomes an open door.
+            #
+            # The name regex is anchored and lists only ALLOW-sense verbs on
+            # purpose. Inverted predicates (`*_invalid?`, `*_denied?`,
+            # `*_expired?`) correctly return true to mean DENY, and flagging
+            # those is the obvious way to make this rule useless; a correct
+            # inverted predicate of that shape was verified NOT to match.
+            - id: watergate-fail-open-rescue-in-auth-predicate
+              languages: [ruby]
+              severity: WARNING
+              message: >-
+                Authorization predicate `$M` returns `true` (allowed) from a `rescue`
+                clause. An error means the check did not complete - it is not evidence
+                that the caller is permitted. Return false, or re-raise, so the failure
+                denies rather than grants.
+              metadata:
+                category: security
+                confidence: MEDIUM
+                references:
+                  - https://cwe.mitre.org/data/definitions/636.html
+              patterns:
+                - pattern-either:
+                    - pattern: |
+                        def $M(...)
+                          ...
+                        rescue $E
+                          ...
+                          true
+                        end
+                    - pattern: |
+                        def $M(...)
+                          ...
+                        rescue
+                          ...
+                          true
+                        end
+                - metavariable-regex:
+                    metavariable: $M
+                    regex: ^(authorize|authorized|authenticate|authenticated|authentic|valid|validate|validated|verify|verified|permitted|allowed|can_|may_|has_access|access_).*\?$
+
+            # ----------------------------------------------------------------
+            # 2. Lua/Kong: the auth service's status is branched on without
+            #    checking that the request reached it.
+            #
+            # luasocket's http.request returns `nil, <error string>` on a
+            # transport failure (DNS, refused, timeout). Code that goes straight
+            # to `tonumber(code) > 299` has not distinguished "the auth service
+            # said no" from "the auth service was never reached" - the two must
+            # not share a branch, because one of them is an unauthenticated
+            # request.
+            - id: watergate-authz-http-response-without-transport-guard
+              languages: [lua]
+              severity: WARNING
+              message: >-
+                The auth service's HTTP status is branched on without first checking
+                that the request succeeded. On a transport failure luasocket returns
+                nil plus an error string, so `code` is not a status here. Guard with
+                `if not res then` (deny) before comparing.
+              metadata:
+                category: security
+                confidence: MEDIUM
+                references:
+                  - https://cwe.mitre.org/data/definitions/636.html
+              patterns:
+                - pattern-inside: |
+                    local $RES, $CODE = http.request(...)
+                    ...
+                - pattern: tonumber($CODE) > $N
+                - pattern-not-inside: |
+                    if not $RES then
+                      ...
+                    end
+                    ...
+                - pattern-not-inside: |
+                    if $RES == nil then
+                      ...
+                    end
+                    ...
+          RULES
+
+      - name: Run Semgrep
+        id: scan
+        env:
+          BLOCKING: ${{ inputs.blocking }}
+          SCAN_PATHS: ${{ inputs.paths }}
+        run: |
+          # `bash -e` would abort on semgrep's non-zero exit before the findings
+          # are rendered, and in report mode a non-zero exit is the expected case.
+          set +e
+          set -uo pipefail
+
+          # One scan, rendered twice: --metrics=off because this reads private
+          # source and nothing should leave the runner; --error to exit non-zero
+          # when a rule matches, so THIS step decides what that means.
+          # Workspace read-only: a scanner has no business writing to the tree it
+          # is scanning. The rules/output directory is the only writable mount.
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/src:ro" \
+            -v "$RUNNER_TEMP/wg-semgrep:/wg" \
+            -w /src \
+            "$SEMGREP_IMAGE" \
+            semgrep scan \
+              --config /wg/authz-fail-open.yml \
+              --metrics=off \
+              --error \
+              --json --output /wg/findings.json \
+              $SCAN_PATHS
+          rc=$?
+
+          # Semgrep exits 1 for findings and >1 for its own failures. A crash or an
+          # unparseable ruleset must fail the job even in report mode - otherwise the
+          # check is dead and still reports green, which is the exact failure this
+          # whole exercise exists to remove.
+          if [ "$rc" -gt 1 ]; then
+            echo "::error::Semgrep failed to run (exit $rc). This is a broken check, not a clean scan."
+            exit "$rc"
+          fi
+
+          python3 - "$rc" "$BLOCKING" <<'PY'
+          import json, os, sys
+
+          rc, blocking = sys.argv[1], sys.argv[2] == "true"
+          results = json.load(open(os.environ["RUNNER_TEMP"] + "/wg-semgrep/findings.json"))["results"]
+
+          lines = ["## Semgrep - authorization fail-open", "", f"Findings: **{len(results)}**", ""]
+          for r in results:
+              path, line = r["path"], r["start"]["line"]
+              rule = r["check_id"].split(".")[-1]
+              msg = " ".join(r["extra"]["message"].split())
+              lines += [f"- `{path}:{line}` - **{rule}**", f"  {msg}", ""]
+              print(f"::warning file={path},line={line}::{rule}: {msg}")
+
+          if blocking:
+              lines.append("Mode: **blocking** - findings fail this job.")
+          else:
+              lines += [
+                  "Mode: **report only** (calibration). Findings do NOT fail this job.",
+                  "",
+                  "This check gates nothing until it is both switched to `blocking: true`",
+                  "and added to the branch's required status checks.",
+              ]
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+              fh.write("\n".join(lines) + "\n")
+          PY
+
+          if [ "$BLOCKING" = "true" ]; then
+            exit "$rc"
+          fi
+
+          if [ "$rc" -eq 1 ]; then
+            echo "::notice::Semgrep reported findings. Report mode: not failing the build."
+          fi
+          exit 0
+
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-authz-findings
+          path: ${{ runner.temp }}/wg-semgrep/findings.json
+          retention-days: 14
+          if-no-files-found: warn
